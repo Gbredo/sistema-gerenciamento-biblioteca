@@ -4,10 +4,10 @@ import biblioteca.aplicacao.EmprestimoServico;
 import biblioteca.dominio.Emprestimo;
 import biblioteca.dominio.Livro;
 import biblioteca.dominio.Usuario;
+
 import biblioteca.infraestrutura.EmprestimoRepositorio;
 import biblioteca.infraestrutura.LivroRepositorio;
 import biblioteca.infraestrutura.UsuarioRepositorio;
-
 import java.util.List;
 
 public class Main {

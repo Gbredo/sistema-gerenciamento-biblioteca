@@ -6,8 +6,8 @@ import biblioteca.dominio.SituacaoEmprestimo;
 import biblioteca.dominio.Usuario;
 import biblioteca.infraestrutura.EmprestimoRepositorio;
 import biblioteca.infraestrutura.LivroRepositorio;
-import biblioteca.infraestrutura.UsuarioRepositorio;
 
+import biblioteca.infraestrutura.UsuarioRepositorio;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
