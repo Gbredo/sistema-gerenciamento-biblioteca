@@ -1,0 +1,30 @@
+# Compilados Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Diretório de saída
+out/
+bin/
+build/
+target/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+*.project
+*.classpath
+.settings/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# PDF do material de estudo (não versionar binários grandes)
+*.pdf
+
+# Configurações do Assistente IA
+.claude/
