@@ -48,6 +48,7 @@ public class EmprestimoServico implements PortaEmprestimo {
                 .orElseThrow(() -> new IllegalArgumentException("Livro nao encontrado: " + livroId));
 
         livro.realizarEmprestimo();
+        livroRepositorio.salvar(livro); // persiste o novo estoque em qualquer adaptador
 
         LocalDate dataDevolucaoPrevista = LocalDate.now().plusDays(PRAZO_PADRAO_DIAS);
         Emprestimo emprestimo = new Emprestimo(contadorId.getAndIncrement(), usuario, livro, dataDevolucaoPrevista);
@@ -62,6 +63,7 @@ public class EmprestimoServico implements PortaEmprestimo {
                 .orElseThrow(() -> new IllegalArgumentException("Emprestimo nao encontrado: " + emprestimoId));
 
         emprestimo.registrarDevolucao();
+        livroRepositorio.salvar(emprestimo.getLivro()); // persiste o estoque restaurado
         emprestimoRepositorio.salvar(emprestimo);
     }
 
