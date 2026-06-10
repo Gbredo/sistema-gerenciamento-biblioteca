@@ -4,10 +4,12 @@ import biblioteca.dominio.Emprestimo;
 import biblioteca.dominio.Livro;
 import biblioteca.dominio.SituacaoEmprestimo;
 import biblioteca.dominio.Usuario;
+import biblioteca.dominio.evento.DevolucaoRegistradaEvento;
+import biblioteca.dominio.evento.EmprestimoRealizadoEvento;
+import biblioteca.dominio.evento.EventBus;
 import biblioteca.dominio.porta.entrada.PortaEmprestimo;
 import biblioteca.dominio.porta.saida.PortaEmprestimoRepositorio;
 import biblioteca.dominio.porta.saida.PortaLivroRepositorio;
-import biblioteca.dominio.porta.saida.PortaNotificacao;
 import biblioteca.dominio.porta.saida.PortaUsuarioRepositorio;
 
 import java.time.LocalDate;
@@ -22,17 +24,20 @@ public class EmprestimoServico implements PortaEmprestimo {
     private final PortaUsuarioRepositorio usuarioRepositorio;
     private final PortaLivroRepositorio livroRepositorio;
     private final PortaEmprestimoRepositorio emprestimoRepositorio;
-    private final PortaNotificacao notificacao;
+    private final EventBus<EmprestimoRealizadoEvento> busEmprestimo;
+    private final EventBus<DevolucaoRegistradaEvento> busDevolucao;
     private final AtomicLong contadorId = new AtomicLong(1);
 
     public EmprestimoServico(PortaUsuarioRepositorio usuarioRepositorio,
                              PortaLivroRepositorio livroRepositorio,
                              PortaEmprestimoRepositorio emprestimoRepositorio,
-                             PortaNotificacao notificacao) {
+                             EventBus<EmprestimoRealizadoEvento> busEmprestimo,
+                             EventBus<DevolucaoRegistradaEvento> busDevolucao) {
         this.usuarioRepositorio = usuarioRepositorio;
         this.livroRepositorio = livroRepositorio;
         this.emprestimoRepositorio = emprestimoRepositorio;
-        this.notificacao = notificacao;
+        this.busEmprestimo = busEmprestimo;
+        this.busDevolucao = busDevolucao;
     }
 
     @Override
@@ -48,12 +53,15 @@ public class EmprestimoServico implements PortaEmprestimo {
                 .orElseThrow(() -> new IllegalArgumentException("Livro nao encontrado: " + livroId));
 
         livro.realizarEmprestimo();
-        livroRepositorio.salvar(livro); // persiste o novo estoque em qualquer adaptador
+        livroRepositorio.salvar(livro);
 
         LocalDate dataDevolucaoPrevista = LocalDate.now().plusDays(PRAZO_PADRAO_DIAS);
         Emprestimo emprestimo = new Emprestimo(contadorId.getAndIncrement(), usuario, livro, dataDevolucaoPrevista);
-
         emprestimoRepositorio.salvar(emprestimo);
+
+        busEmprestimo.publicar(new EmprestimoRealizadoEvento(
+                emprestimo.getId(), usuarioId, livroId, emprestimo.getDataEmprestimo()));
+
         return emprestimo;
     }
 
@@ -63,8 +71,14 @@ public class EmprestimoServico implements PortaEmprestimo {
                 .orElseThrow(() -> new IllegalArgumentException("Emprestimo nao encontrado: " + emprestimoId));
 
         emprestimo.registrarDevolucao();
-        livroRepositorio.salvar(emprestimo.getLivro()); // persiste o estoque restaurado
+        livroRepositorio.salvar(emprestimo.getLivro());
         emprestimoRepositorio.salvar(emprestimo);
+
+        boolean comAtraso = emprestimo.getDataDevolucaoEfetiva()
+                .isAfter(emprestimo.getDataDevolucaoPrevista());
+
+        busDevolucao.publicar(new DevolucaoRegistradaEvento(
+                emprestimoId, emprestimo.getDataDevolucaoEfetiva(), comAtraso));
     }
 
     @Override
@@ -76,12 +90,9 @@ public class EmprestimoServico implements PortaEmprestimo {
 
     @Override
     public List<Emprestimo> verificarAtrasos() {
-        List<Emprestimo> atrasados = listarEmprestimosAtivos().stream()
+        return listarEmprestimosAtivos().stream()
                 .peek(Emprestimo::verificarAtraso)
                 .filter(e -> e.getSituacao() == SituacaoEmprestimo.ATRASADO)
                 .collect(Collectors.toList());
-
-        atrasados.forEach(e -> notificacao.notificarAtraso(e.getUsuario(), e));
-        return atrasados;
     }
 }

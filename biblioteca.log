@@ -1,0 +1,4 @@
+2026-06-09 21:17:18 [EMPRESTIMO] id=1 usuario=1 livro=1 retirada=2026-06-09
+2026-06-09 21:17:18 [DEVOLUCAO]  id=1 data=2026-06-09 atraso=false
+2026-06-09 21:17:49 [EMPRESTIMO] id=1 usuario=1 livro=1 retirada=2026-06-09
+2026-06-09 21:17:49 [DEVOLUCAO]  id=1 data=2026-06-09 atraso=false
